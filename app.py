@@ -12,7 +12,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# TABLA DE USUARIOS
+# TABLAS DE LA BASE DE DATOS
 class Usuario(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -22,12 +22,21 @@ class Usuario(UserMixin, db.Model):
     rol = db.Column(db.String(20), nullable=False) # 'admin', 'profesor', 'alumno'
     plan = db.Column(db.String(50), default='Ninguno')
 
-# NUEVA: TABLA DE DISCIPLINAS
 class Disciplina(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(200))
     estado = db.Column(db.String(20), default='Activa')
+
+# NUEVA: AGENDA DE CLASES
+class Clase(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    disciplina_id = db.Column(db.Integer, db.ForeignKey('disciplina.id'), nullable=False)
+    fecha = db.Column(db.String(20), nullable=False) # Ej: 2024-11-20
+    hora = db.Column(db.String(10), nullable=False)  # Ej: 18:00
+    cupo = db.Column(db.Integer, nullable=False)
+    
+    disciplina = db.relationship('Disciplina', backref='clases')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -114,13 +123,11 @@ def admin_panel():
     usuarios = Usuario.query.all()
     return render_template('admin.html', usuarios=usuarios)
 
-# NUEVA: RUTA PARA GESTIONAR DISCIPLINAS
 @app.route('/admin/disciplinas', methods=['GET', 'POST'])
 @login_required
 def admin_disciplinas():
     if current_user.rol != 'admin':
         return "Acceso denegado", 403
-    
     if request.method == 'POST':
         nombre = request.form['nombre']
         descripcion = request.form['descripcion']
@@ -128,9 +135,29 @@ def admin_disciplinas():
         db.session.add(nueva_disciplina)
         db.session.commit()
         return redirect(url_for('admin_disciplinas'))
-        
     disciplinas = Disciplina.query.all()
     return render_template('admin_disciplinas.html', disciplinas=disciplinas)
+
+# NUEVA: RUTA PARA GESTIONAR LA AGENDA DE CLASES
+@app.route('/admin/clases', methods=['GET', 'POST'])
+@login_required
+def admin_clases():
+    if current_user.rol != 'admin':
+        return "Acceso denegado", 403
+    
+    if request.method == 'POST':
+        disciplina_id = request.form['disciplina_id']
+        fecha = request.form['fecha']
+        hora = request.form['hora']
+        cupo = request.form['cupo']
+        nueva_clase = Clase(disciplina_id=disciplina_id, fecha=fecha, hora=hora, cupo=cupo)
+        db.session.add(nueva_clase)
+        db.session.commit()
+        return redirect(url_for('admin_clases'))
+        
+    clases = Clase.query.order_by(Clase.fecha, Clase.hora).all()
+    disciplinas = Disciplina.query.all()
+    return render_template('admin_clases.html', clases=clases, disciplinas=disciplinas)
 
 @app.route('/profesor')
 @login_required

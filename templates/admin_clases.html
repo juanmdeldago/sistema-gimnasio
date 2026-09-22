@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración</title>
+    <title>Agenda de Clases - Admin</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -12,6 +12,10 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
         th { background-color: #343a40; color: white; }
+        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 20px; display: grid; gap: 10px; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
         .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
@@ -27,25 +31,39 @@
         <a href="{{ url_for('admin_clases') }}">📅 Agenda de Clases</a>
     </div>
 
-    <h3>Listado de Usuarios Registrados</h3>
+    <div class="form-container">
+        <h3>Programar Nueva Clase</h3>
+        <form method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select name="disciplina_id" required>
+                <option value="" disabled selected>Elegí la Disciplina...</option>
+                {% for d in disciplinas %}
+                    <option value="{{ d.id }}">{{ d.nombre }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="fecha" required>
+            <input type="time" name="hora" required>
+            <input type="number" name="cupo" placeholder="Cupo máximo" min="1" required>
+            <button type="submit">Agregar a la Agenda</button>
+        </form>
+    </div>
+
+    <h3>Agenda Programada</h3>
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Usuario</th>
-                <th>Nombre y Apellido</th>
-                <th>Rol</th>
-                <th>Plan</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Disciplina</th>
+                <th>Cupo Máximo</th>
             </tr>
         </thead>
         <tbody>
-            {% for u in usuarios %}
+            {% for c in clases %}
             <tr>
-                <td>{{ u.id }}</td>
-                <td>{{ u.username }}</td>
-                <td>{{ u.nombre }} {{ u.apellido }}</td>
-                <td><strong>{{ u.rol | upper }}</strong></td>
-                <td>{{ u.plan }}</td>
+                <td>{{ c.fecha }}</td>
+                <td><strong>{{ c.hora }}</strong></td>
+                <td>{{ c.disciplina.nombre }}</td>
+                <td>{{ c.cupo }} personas</td>
             </tr>
             {% endfor %}
         </tbody>
