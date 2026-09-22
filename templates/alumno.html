@@ -2,30 +2,38 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mi Panel de Alumno</title>
+    <title>Portal de Alumnos - Crossfy Style</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #17a2b8; color: white; }
-        .btn-reservar { background: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-reservar:hover { background: #218838; }
-        .btn-lleno { background: #6c757d; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold; }
-        .btn-anotado { background: #ffc107; color: black; padding: 6px 12px; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold; }
-        .msg { padding: 10px; margin-top: 15px; border-radius: 4px; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; text-decoration: none; font-weight: bold; }
+        .btn-logout:hover { background: #dc2626; }
+        h3 { color: #38bdf8; margin-top: 30px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card-clase { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-left: 5px solid #38bdf8; }
+        .card-clase.llena { border-left-color: #ef4444; }
+        .card-clase.anotado { border-left-color: #22c55e; }
+        .hora { font-size: 20px; font-weight: bold; color: #f8fafc; margin-bottom: 5px; }
+        .disciplina { font-size: 16px; color: #38bdf8; margin-bottom: 10px; font-weight: 600; }
+        .info { font-size: 14px; color: #94a3b8; margin-bottom: 15px; }
+        button, .badge { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-reservar { background: #22c55e; color: white; }
+        .btn-reservar:hover { background: #16a34a; }
+        .badge-anotado { background: #22c55e33; color: #22c55e; border: 1px solid #22c55e; }
+        .badge-lleno { background: #ef444433; color: #ef4444; border: 1px solid #ef4444; }
+        .msg { padding: 12px; margin-top: 15px; border-radius: 6px; font-weight: bold; }
+        .success { background-color: #22c55e33; color: #22c55e; border: 1px solid #22c55e; }
+        .danger { background-color: #ef444433; color: #ef4444; border: 1px solid #ef4444; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>Bienvenido, {{ current_user.nombre }}!</h2>
+        <div>
+            <h2>¡Hola, {{ current_user.nombre }}! 👋</h2>
+            <p style="margin: 0; color: #94a3b8;">Plan activo: <strong>{{ current_user.plan }}</strong></p>
+        </div>
         <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
     </div>
-    
-    <p>Tu plan actual es: <strong>{{ current_user.plan }}</strong></p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -35,38 +43,30 @@
       {% endif %}
     {% endwith %}
 
-    <h3>Próximas Clases Disponibles</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Disciplina</th>
-                <th>Lugares Libres</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for c in clases %}
-            <tr>
-                <td>{{ c.fecha }}</td>
-                <td><strong>{{ c.hora }}</strong></td>
-                <td>{{ c.disciplina.nombre }}</td>
-                <td>{{ c.cupo - c.reservas|length }} / {{ c.cupo }}</td>
-                <td>
-                    {% if c.id in mis_reservas_ids %}
-                        <button class="btn-anotado" disabled>Ya estás anotado</button>
-                    {% elif c.reservas|length >= c.cupo %}
-                        <button class="btn-lleno" disabled>Clase Llena</button>
-                    {% else %}
-                        <form action="{{ url_for('reservar_clase', clase_id=c.id) }}" method="POST" style="margin:0;">
-                            <button type="submit" class="btn-reservar">Reservar Lugar</button>
-                        </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h3>📅 Clases Disponibles para Reservar</h3>
+    
+    <div class="grid-container">
+        {% for c in clases %}
+        <div class="card-clase {% if c.id in mis_reservas_ids %}anotado{% elif c.reservas|length >= c.cupo %}llena{% endif %}">
+            <div class="disciplina">🏋️ {{ c.disciplina.nombre }}</div>
+            <div class="hora">⏰ {{ c.hora }} hs</div>
+            <div class="info">📅 Fecha: {{ c.fecha }}<br>👥 Disponibles: {{ c.cupo - c.reservas|length }} de {{ c.cupo }} lugares</div>
+            
+            <div>
+                {% if c.id in mis_reservas_ids %}
+                    <div class="badge badge-anotado">✓ Ya estás anotado</div>
+                {% elif c.reservas|length >= c.cupo %}
+                    <div class="badge badge-lleno">✕ Clase Completa</div>
+                {% else %}
+                    <form action="{{ url_for('reservar_clase', clase_id=c.id) }}" method="POST">
+                        <button type="submit" class="btn-reservar">Reservar Turno</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p style="color: #94a3b8;">No hay clases programadas en este momento.</p>
+        {% endfor %}
+    </div>
 </body>
 </html>

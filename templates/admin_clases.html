@@ -2,38 +2,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Agenda de Clases - Admin</title>
+    <title>Gestión de Clases - Admin</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .nav-menu { margin-top: 20px; margin-bottom: 20px; }
-        .nav-menu a { margin-right: 15px; text-decoration: none; font-weight: bold; color: #007bff; padding: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
-        .nav-menu a:hover { background: #e9ecef; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #343a40; color: white; }
-        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 20px; display: grid; gap: 10px; }
-        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #218838; }
-        .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
-        .btn-ver { background: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; }
-        .btn-ver:hover { background: #0056b3; }
-        .btn-eliminar { background: #dc3545; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; margin-left: 5px;}
-        .btn-eliminar:hover { background: #c82333; }
-        .msg { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .nav-menu { margin: 20px 0; display: flex; gap: 10px; }
+        .nav-menu a { text-decoration: none; font-weight: bold; color: #38bdf8; padding: 10px 16px; background: #1e293b; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .nav-menu a:hover { background: #334155; }
+        .form-container { background: #1e293b; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-top: 20px; }
+        input, select, button { padding: 12px; border: 1px solid #475569; border-radius: 6px; background: #0f172a; color: white; font-size: 14px; }
+        button { background: #38bdf8; color: #0f172a; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0ea5e9; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        th, td { padding: 14px; border-bottom: 1px solid #334155; text-align: left; }
+        th { background-color: #334155; color: #38bdf8; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; }
+        .btn-ver { background: #38bdf8; color: #0f172a; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; }
+        .btn-eliminar { background: #ef4444; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; margin-left: 5px; }
+        .msg { padding: 12px; margin-bottom: 15px; border-radius: 6px; font-weight: bold; background-color: #22c55e33; color: #22c55e; border: 1px solid #22c55e; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>Panel de Administración Total</h2>
+        <h2>Panel de Administración - Control Total</h2>
         <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
     </div>
 
     <div class="nav-menu">
         <a href="{{ url_for('admin_panel') }}">👥 Usuarios</a>
         <a href="{{ url_for('admin_disciplinas') }}">🏋️ Disciplinas</a>
-        <a href="{{ url_for('admin_clases') }}">📅 Agenda de Clases</a>
+        <a href="{{ url_for('admin_clases') }}">📅 Agenda y Horarios</a>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -43,16 +41,16 @@
     {% endwith %}
 
     <div class="form-container">
-        <h3>Programar Horario Fijo (Generador Automático)</h3>
-        <form method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <h3>⚡ Generador Rápido de Horarios Fijos</h3>
+        <form method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
             <select name="disciplina_id" required>
-                <option value="" disabled selected>Elegí la Disciplina...</option>
+                <option value="" disabled selected>Seleccioná Disciplina...</option>
                 {% for d in disciplinas %}
                     <option value="{{ d.id }}">{{ d.nombre }}</option>
                 {% endfor %}
             </select>
             <select name="dia_semana" required>
-                <option value="" disabled selected>Día de la semana...</option>
+                <option value="" disabled selected>Día...</option>
                 <option value="0">Lunes</option>
                 <option value="1">Martes</option>
                 <option value="2">Miércoles</option>
@@ -62,17 +60,16 @@
                 <option value="6">Domingo</option>
             </select>
             <input type="time" name="hora" required>
-            <input type="number" name="cupo" placeholder="Cupo máximo" min="1" required>
+            <input type="number" name="cupo" placeholder="Cupo (ej: 20)" min="1" required>
             <select name="meses" required>
-                <option value="1">Generar por 1 Mes</option>
-                <option value="3">Generar por 3 Meses</option>
-                <option value="6">Generar por 6 Meses</option>
+                <option value="1">Generar 1 Mes</option>
+                <option value="3">Generar 3 Meses</option>
             </select>
             <button type="submit">Generar Turnos</button>
         </form>
     </div>
 
-    <h3>Próximos Turnos Generados</h3>
+    <h3>📋 Próximas Clases en Agenda</h3>
     <table>
         <thead>
             <tr>
@@ -87,12 +84,12 @@
             {% for c in clases %}
             <tr>
                 <td>{{ c.fecha }}</td>
-                <td><strong>{{ c.hora }}</strong></td>
+                <td><strong>{{ c.hora }} hs</strong></td>
                 <td>{{ c.disciplina.nombre }}</td>
-                <td>{{ c.reservas|length }} / {{ c.cupo }}</td>
+                <td>{{ c.reservas|length }} / {{ c.cupo }} inscriptos</td>
                 <td>
-                    <a href="{{ url_for('admin_inscriptos', clase_id=c.id) }}" class="btn-ver">Ver Lista</a>
-                    <a href="{{ url_for('eliminar_clase', clase_id=c.id) }}" class="btn-eliminar" onclick="return confirm('¿Seguro que querés cancelar esta clase?');">Cancelar</a>
+                    <a href="{{ url_for('admin_inscriptos', clase_id=c.id) }}" class="btn-ver">Ver Inscriptos</a>
+                    <a href="{{ url_for('eliminar_clase', clase_id=c.id) }}" class="btn-eliminar" onclick="return confirm('¿Cancelar esta clase?');">Cancelar</a>
                 </td>
             </tr>
             {% endfor %}
