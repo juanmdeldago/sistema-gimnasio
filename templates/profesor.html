@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Profesor</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; }
+        .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Panel del Profesor - Mis Clases y Alumnos</h2>
+        <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
+    </div>
+    <p>Acá vas a ver los horarios de tus clases asignadas y el listado de los alumnos inscriptos.</p>
+</body>
+</html>

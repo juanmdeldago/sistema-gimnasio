@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Alumno - Gimnasio</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; background: #28a745; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        .link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .link a { color: #007bff; text-decoration: none; }
+        .msg { color: red; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Registro de Alumno</h2>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="msg">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <label>Nombre:</label>
+            <input type="text" name="nombre" required>
+            <label>Apellido:</label>
+            <input type="text" name="apellido" required>
+            <label>Nombre de Usuario (único):</label>
+            <input type="text" name="username" required>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+            <label>Seleccioná tu Plan:</label>
+            <select name="plan">
+                <option value="Plan Mensual">Plan Mensual</option>
+                <option value="Plan Semestral">Plan Semestral</option>
+                <option value="Plan Anual">Plan Anual</option>
+            </select>
+            <button type="submit">Registrarse</button>
+        </form>
+        <div class="link">
+            ¿Ya tenés cuenta? <a href="{{ url_for('login') }}">Iniciá sesión</a>
+        </div>
+    </div>
+</body>
+</html>
