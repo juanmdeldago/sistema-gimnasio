@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave-secreta-super-segura'
@@ -38,7 +39,6 @@ class Clase(db.Model):
     disciplina = db.relationship('Disciplina', backref='clases')
     reservas = db.relationship('Reserva', backref='clase_reservada', lazy=True, cascade="all, delete-orphan")
 
-# NUEVA: TABLA DE RESERVAS
 class Reserva(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
@@ -99,20 +99,16 @@ def registro():
         plan = request.form['plan']
 
         if Usuario.query.filter_by(username=username).first():
-            flash('El nombre de usuario ya está en uso. Elegí otro.', 'danger')
+            flash('El usuario ya existe.', 'danger')
             return redirect(url_for('registro'))
 
-        nuevo_usuario = Usuario(
-            username=username,
-            password=generate_password_hash(password, method='pbkdf2:sha256'),
-            nombre=nombre,
-            apellido=apellido,
-            rol='alumno',
-            plan=plan
+        nuevo = Usuario(
+            username=username, password=generate_password_hash(password, method='pbkdf2:sha256'),
+            nombre=nombre, apellido=apellido, rol='alumno', plan=plan
         )
-        db.session.add(nuevo_usuario)
+        db.session.add(nuevo)
         db.session.commit()
-        flash('¡Cuenta creada con éxito! Ya podés iniciar sesión.', 'success')
+        flash('Cuenta creada. Ya podés iniciar sesión.', 'success')
         return redirect(url_for('login'))
     return render_template('registro.html')
 
@@ -122,96 +118,109 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# PANELES DE ADMINISTRADOR
+# PANELES DE ADMIN
 @app.route('/admin')
 @login_required
 def admin_panel():
-    if current_user.rol != 'admin':
-        return "Acceso denegado", 403
+    if current_user.rol != 'admin': return "Denegado", 403
     usuarios = Usuario.query.all()
     return render_template('admin.html', usuarios=usuarios)
 
 @app.route('/admin/disciplinas', methods=['GET', 'POST'])
 @login_required
 def admin_disciplinas():
-    if current_user.rol != 'admin':
-        return "Acceso denegado", 403
+    if current_user.rol != 'admin': return "Denegado", 403
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        descripcion = request.form['descripcion']
-        nueva_disciplina = Disciplina(nombre=nombre, descripcion=descripcion)
-        db.session.add(nueva_disciplina)
+        db.session.add(Disciplina(nombre=request.form['nombre'], descripcion=request.form['descripcion']))
         db.session.commit()
         return redirect(url_for('admin_disciplinas'))
-    disciplinas = Disciplina.query.all()
-    return render_template('admin_disciplinas.html', disciplinas=disciplinas)
+    return render_template('admin_disciplinas.html', disciplinas=Disciplina.query.all())
 
+# NUEVO: RUTAS DE AGENDA CON GENERADOR
 @app.route('/admin/clases', methods=['GET', 'POST'])
 @login_required
 def admin_clases():
-    if current_user.rol != 'admin':
-        return "Acceso denegado", 403
+    if current_user.rol != 'admin': return "Denegado", 403
+    
     if request.method == 'POST':
         disciplina_id = request.form['disciplina_id']
-        fecha = request.form['fecha']
+        dia_semana = int(request.form['dia_semana']) # 0=Lunes, 6=Domingo
         hora = request.form['hora']
         cupo = request.form['cupo']
-        nueva_clase = Clase(disciplina_id=disciplina_id, fecha=fecha, hora=hora, cupo=cupo)
-        db.session.add(nueva_clase)
+        meses = int(request.form['meses'])
+        
+        # Calcular cuantas semanas generar
+        semanas = meses * 4
+        fecha_actual = date.today()
+        # Buscar el próximo día que coincida con el día de la semana elegido
+        dias_faltantes = (dia_semana - fecha_actual.weekday()) % 7
+        fecha_clase = fecha_actual + timedelta(days=dias_faltantes)
+        
+        clases_creadas = 0
+        for i in range(semanas):
+            fecha_str = fecha_clase.strftime('%Y-%m-%d')
+            # Verifica si ya existe para no duplicar turnos en el mismo horario
+            if not Clase.query.filter_by(disciplina_id=disciplina_id, fecha=fecha_str, hora=hora).first():
+                db.session.add(Clase(disciplina_id=disciplina_id, fecha=fecha_str, hora=hora, cupo=cupo))
+                clases_creadas += 1
+            fecha_clase += timedelta(days=7) # Salta a la próxima semana
+            
         db.session.commit()
+        flash(f'Éxito: Se generaron {clases_creadas} clases fijas.', 'success')
         return redirect(url_for('admin_clases'))
-    clases = Clase.query.order_by(Clase.fecha, Clase.hora).all()
+        
+    # Mostrar solo clases de hoy en adelante para no llenar la pantalla de historial
+    hoy = date.today().strftime('%Y-%m-%d')
+    clases = Clase.query.filter(Clase.fecha >= hoy).order_by(Clase.fecha, Clase.hora).all()
     disciplinas = Disciplina.query.all()
     return render_template('admin_clases.html', clases=clases, disciplinas=disciplinas)
+
+@app.route('/admin/clases/eliminar/<int:clase_id>')
+@login_required
+def eliminar_clase(clase_id):
+    if current_user.rol != 'admin': return "Denegado", 403
+    clase = Clase.query.get_or_404(clase_id)
+    db.session.delete(clase)
+    db.session.commit()
+    flash('Clase cancelada correctamente.', 'success')
+    return redirect(url_for('admin_clases'))
 
 @app.route('/admin/clases/<int:clase_id>/inscriptos')
 @login_required
 def admin_inscriptos(clase_id):
-    if current_user.rol != 'admin':
-        return "Acceso denegado", 403
-    clase = Clase.query.get_or_404(clase_id)
-    return render_template('admin_inscriptos.html', clase=clase)
+    if current_user.rol != 'admin': return "Denegado", 403
+    return render_template('admin_inscriptos.html', clase=Clase.query.get_or_404(clase_id))
 
 # PANELES DE PROFESOR Y ALUMNO
 @app.route('/profesor')
 @login_required
 def profesor_panel():
-    if current_user.rol != 'profesor':
-        return "Acceso denegado", 403
+    if current_user.rol != 'profesor': return "Denegado", 403
     return render_template('profesor.html')
 
 @app.route('/alumno')
 @login_required
 def alumno_panel():
-    if current_user.rol != 'alumno':
-        return "Acceso denegado", 403
-    clases = Clase.query.order_by(Clase.fecha, Clase.hora).all()
-    # Armamos una lista con los IDs de las clases que ya reservó el alumno
+    if current_user.rol != 'alumno': return "Denegado", 403
+    hoy = date.today().strftime('%Y-%m-%d')
+    clases = Clase.query.filter(Clase.fecha >= hoy).order_by(Clase.fecha, Clase.hora).all()
     mis_reservas_ids = [reserva.clase_id for reserva in current_user.mis_reservas]
     return render_template('alumno.html', clases=clases, mis_reservas_ids=mis_reservas_ids)
 
 @app.route('/reservar/<int:clase_id>', methods=['POST'])
 @login_required
 def reservar_clase(clase_id):
-    if current_user.rol != 'alumno':
-        return "Acceso denegado", 403
-    
+    if current_user.rol != 'alumno': return "Denegado", 403
     clase = Clase.query.get_or_404(clase_id)
     
-    # Verificar si ya está anotado
     if Reserva.query.filter_by(usuario_id=current_user.id, clase_id=clase_id).first():
         flash('Ya estás anotado en esta clase.', 'danger')
-        return redirect(url_for('alumno_panel'))
-    
-    # Verificar cupo
-    if len(clase.reservas) >= clase.cupo:
-        flash('La clase ya no tiene lugares disponibles.', 'danger')
-        return redirect(url_for('alumno_panel'))
-        
-    nueva_reserva = Reserva(usuario_id=current_user.id, clase_id=clase_id)
-    db.session.add(nueva_reserva)
-    db.session.commit()
-    flash('¡Lugar reservado con éxito! Nos vemos en la clase.', 'success')
+    elif len(clase.reservas) >= clase.cupo:
+        flash('La clase está llena.', 'danger')
+    else:
+        db.session.add(Reserva(usuario_id=current_user.id, clase_id=clase_id))
+        db.session.commit()
+        flash('¡Reservado con éxito!', 'success')
     return redirect(url_for('alumno_panel'))
 
 if __name__ == '__main__':

@@ -19,6 +19,9 @@
         .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
         .btn-ver { background: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; }
         .btn-ver:hover { background: #0056b3; }
+        .btn-eliminar { background: #dc3545; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; margin-left: 5px;}
+        .btn-eliminar:hover { background: #c82333; }
+        .msg { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
     </style>
 </head>
 <body>
@@ -33,8 +36,14 @@
         <a href="{{ url_for('admin_clases') }}">📅 Agenda de Clases</a>
     </div>
 
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="msg">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
     <div class="form-container">
-        <h3>Programar Nueva Clase</h3>
+        <h3>Programar Horario Fijo (Generador Automático)</h3>
         <form method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
             <select name="disciplina_id" required>
                 <option value="" disabled selected>Elegí la Disciplina...</option>
@@ -42,14 +51,28 @@
                     <option value="{{ d.id }}">{{ d.nombre }}</option>
                 {% endfor %}
             </select>
-            <input type="date" name="fecha" required>
+            <select name="dia_semana" required>
+                <option value="" disabled selected>Día de la semana...</option>
+                <option value="0">Lunes</option>
+                <option value="1">Martes</option>
+                <option value="2">Miércoles</option>
+                <option value="3">Jueves</option>
+                <option value="4">Viernes</option>
+                <option value="5">Sábado</option>
+                <option value="6">Domingo</option>
+            </select>
             <input type="time" name="hora" required>
             <input type="number" name="cupo" placeholder="Cupo máximo" min="1" required>
-            <button type="submit">Agregar a la Agenda</button>
+            <select name="meses" required>
+                <option value="1">Generar por 1 Mes</option>
+                <option value="3">Generar por 3 Meses</option>
+                <option value="6">Generar por 6 Meses</option>
+            </select>
+            <button type="submit">Generar Turnos</button>
         </form>
     </div>
 
-    <h3>Agenda Programada</h3>
+    <h3>Próximos Turnos Generados</h3>
     <table>
         <thead>
             <tr>
@@ -57,7 +80,7 @@
                 <th>Hora</th>
                 <th>Disciplina</th>
                 <th>Ocupación</th>
-                <th>Inscriptos</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -67,7 +90,10 @@
                 <td><strong>{{ c.hora }}</strong></td>
                 <td>{{ c.disciplina.nombre }}</td>
                 <td>{{ c.reservas|length }} / {{ c.cupo }}</td>
-                <td><a href="{{ url_for('admin_inscriptos', clase_id=c.id) }}" class="btn-ver">Ver Lista</a></td>
+                <td>
+                    <a href="{{ url_for('admin_inscriptos', clase_id=c.id) }}" class="btn-ver">Ver Lista</a>
+                    <a href="{{ url_for('eliminar_clase', clase_id=c.id) }}" class="btn-eliminar" onclick="return confirm('¿Seguro que querés cancelar esta clase?');">Cancelar</a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
