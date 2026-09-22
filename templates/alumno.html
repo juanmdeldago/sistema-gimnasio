@@ -4,9 +4,19 @@
     <meta charset="UTF-8">
     <title>Mi Panel de Alumno</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; }
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #17a2b8; color: white; }
+        .btn-reservar { background: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-reservar:hover { background: #218838; }
+        .btn-lleno { background: #6c757d; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold; }
+        .btn-anotado { background: #ffc107; color: black; padding: 6px 12px; border: none; border-radius: 4px; cursor: not-allowed; font-weight: bold; }
+        .msg { padding: 10px; margin-top: 15px; border-radius: 4px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
@@ -14,7 +24,49 @@
         <h2>Bienvenido, {{ current_user.nombre }}!</h2>
         <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
     </div>
+    
     <p>Tu plan actual es: <strong>{{ current_user.plan }}</strong></p>
-    <p>Desde acá vas a poder ver las actividades disponibles y anotarte a las clases.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="msg {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h3>Próximas Clases Disponibles</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Disciplina</th>
+                <th>Lugares Libres</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in clases %}
+            <tr>
+                <td>{{ c.fecha }}</td>
+                <td><strong>{{ c.hora }}</strong></td>
+                <td>{{ c.disciplina.nombre }}</td>
+                <td>{{ c.cupo - c.reservas|length }} / {{ c.cupo }}</td>
+                <td>
+                    {% if c.id in mis_reservas_ids %}
+                        <button class="btn-anotado" disabled>Ya estás anotado</button>
+                    {% elif c.reservas|length >= c.cupo %}
+                        <button class="btn-lleno" disabled>Clase Llena</button>
+                    {% else %}
+                        <form action="{{ url_for('reservar_clase', clase_id=c.id) }}" method="POST" style="margin:0;">
+                            <button type="submit" class="btn-reservar">Reservar Lugar</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

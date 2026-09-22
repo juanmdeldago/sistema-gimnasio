@@ -28,15 +28,23 @@ class Disciplina(db.Model):
     descripcion = db.Column(db.String(200))
     estado = db.Column(db.String(20), default='Activa')
 
-# NUEVA: AGENDA DE CLASES
 class Clase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     disciplina_id = db.Column(db.Integer, db.ForeignKey('disciplina.id'), nullable=False)
-    fecha = db.Column(db.String(20), nullable=False) # Ej: 2024-11-20
-    hora = db.Column(db.String(10), nullable=False)  # Ej: 18:00
+    fecha = db.Column(db.String(20), nullable=False)
+    hora = db.Column(db.String(10), nullable=False)
     cupo = db.Column(db.Integer, nullable=False)
     
     disciplina = db.relationship('Disciplina', backref='clases')
+    reservas = db.relationship('Reserva', backref='clase_reservada', lazy=True, cascade="all, delete-orphan")
+
+# NUEVA: TABLA DE RESERVAS
+class Reserva(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    clase_id = db.Column(db.Integer, db.ForeignKey('clase.id'), nullable=False)
+    
+    usuario = db.relationship('Usuario', backref='mis_reservas')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -114,7 +122,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# PANELES SEGÚN EL ROL
+# PANELES DE ADMINISTRADOR
 @app.route('/admin')
 @login_required
 def admin_panel():
@@ -138,13 +146,11 @@ def admin_disciplinas():
     disciplinas = Disciplina.query.all()
     return render_template('admin_disciplinas.html', disciplinas=disciplinas)
 
-# NUEVA: RUTA PARA GESTIONAR LA AGENDA DE CLASES
 @app.route('/admin/clases', methods=['GET', 'POST'])
 @login_required
 def admin_clases():
     if current_user.rol != 'admin':
         return "Acceso denegado", 403
-    
     if request.method == 'POST':
         disciplina_id = request.form['disciplina_id']
         fecha = request.form['fecha']
@@ -154,11 +160,19 @@ def admin_clases():
         db.session.add(nueva_clase)
         db.session.commit()
         return redirect(url_for('admin_clases'))
-        
     clases = Clase.query.order_by(Clase.fecha, Clase.hora).all()
     disciplinas = Disciplina.query.all()
     return render_template('admin_clases.html', clases=clases, disciplinas=disciplinas)
 
+@app.route('/admin/clases/<int:clase_id>/inscriptos')
+@login_required
+def admin_inscriptos(clase_id):
+    if current_user.rol != 'admin':
+        return "Acceso denegado", 403
+    clase = Clase.query.get_or_404(clase_id)
+    return render_template('admin_inscriptos.html', clase=clase)
+
+# PANELES DE PROFESOR Y ALUMNO
 @app.route('/profesor')
 @login_required
 def profesor_panel():
@@ -171,7 +185,34 @@ def profesor_panel():
 def alumno_panel():
     if current_user.rol != 'alumno':
         return "Acceso denegado", 403
-    return render_template('alumno.html')
+    clases = Clase.query.order_by(Clase.fecha, Clase.hora).all()
+    # Armamos una lista con los IDs de las clases que ya reservó el alumno
+    mis_reservas_ids = [reserva.clase_id for reserva in current_user.mis_reservas]
+    return render_template('alumno.html', clases=clases, mis_reservas_ids=mis_reservas_ids)
+
+@app.route('/reservar/<int:clase_id>', methods=['POST'])
+@login_required
+def reservar_clase(clase_id):
+    if current_user.rol != 'alumno':
+        return "Acceso denegado", 403
+    
+    clase = Clase.query.get_or_404(clase_id)
+    
+    # Verificar si ya está anotado
+    if Reserva.query.filter_by(usuario_id=current_user.id, clase_id=clase_id).first():
+        flash('Ya estás anotado en esta clase.', 'danger')
+        return redirect(url_for('alumno_panel'))
+    
+    # Verificar cupo
+    if len(clase.reservas) >= clase.cupo:
+        flash('La clase ya no tiene lugares disponibles.', 'danger')
+        return redirect(url_for('alumno_panel'))
+        
+    nueva_reserva = Reserva(usuario_id=current_user.id, clase_id=clase_id)
+    db.session.add(nueva_reserva)
+    db.session.commit()
+    flash('¡Lugar reservado con éxito! Nos vemos en la clase.', 'success')
+    return redirect(url_for('alumno_panel'))
 
 if __name__ == '__main__':
     app.run(debug=True)

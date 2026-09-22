@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscriptos - Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-volver { background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; margin-bottom: 20px; display: inline-block;}
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #343a40; color: white; }
+    </style>
+</head>
+<body>
+    <br>
+    <a href="{{ url_for('admin_clases') }}" class="btn-volver">← Volver a la Agenda</a>
+
+    <div class="header">
+        <h2>Lista de Inscriptos</h2>
+    </div>
+
+    <h3>Clase de {{ clase.disciplina.nombre }} | Fecha: {{ clase.fecha }} | Hora: {{ clase.hora }}</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Usuario</th>
+                <th>Nombre Completo</th>
+                <th>Plan Actual</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in clase.reservas %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ reserva.usuario.username }}</td>
+                <td><strong>{{ reserva.usuario.nombre }} {{ reserva.usuario.apellido }}</strong></td>
+                <td>{{ reserva.usuario.plan }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Todavía no hay alumnos anotados en esta clase.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

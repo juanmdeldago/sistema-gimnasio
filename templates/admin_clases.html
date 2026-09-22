@@ -17,6 +17,8 @@
         button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background: #218838; }
         .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .btn-ver { background: #007bff; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 13px; font-weight: bold; }
+        .btn-ver:hover { background: #0056b3; }
     </style>
 </head>
 <body>
@@ -54,7 +56,8 @@
                 <th>Fecha</th>
                 <th>Hora</th>
                 <th>Disciplina</th>
-                <th>Cupo Máximo</th>
+                <th>Ocupación</th>
+                <th>Inscriptos</th>
             </tr>
         </thead>
         <tbody>
@@ -63,7 +66,8 @@
                 <td>{{ c.fecha }}</td>
                 <td><strong>{{ c.hora }}</strong></td>
                 <td>{{ c.disciplina.nombre }}</td>
-                <td>{{ c.cupo }} personas</td>
+                <td>{{ c.reservas|length }} / {{ c.cupo }}</td>
+                <td><a href="{{ url_for('admin_inscriptos', clase_id=c.id) }}" class="btn-ver">Ver Lista</a></td>
             </tr>
             {% endfor %}
         </tbody>
