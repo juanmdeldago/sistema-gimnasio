@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración</title>
+    <title>Disciplinas - Admin</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -12,6 +12,10 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
         th { background-color: #343a40; color: white; }
+        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 20px; }
+        input, button { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
         .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
@@ -26,25 +30,32 @@
         <a href="{{ url_for('admin_disciplinas') }}">🏋️ Gestión de Disciplinas</a>
     </div>
 
-    <h3>Listado de Usuarios Registrados</h3>
+    <div class="form-container">
+        <h3>Agregar Nueva Disciplina</h3>
+        <form method="POST">
+            <input type="text" name="nombre" placeholder="Nombre (Ej: Funcional, CrossFit)" required>
+            <input type="text" name="descripcion" placeholder="Breve descripción..." required>
+            <button type="submit">Guardar Disciplina</button>
+        </form>
+    </div>
+
+    <h3>Disciplinas Activas</h3>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Usuario</th>
-                <th>Nombre y Apellido</th>
-                <th>Rol</th>
-                <th>Plan</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
-            {% for u in usuarios %}
+            {% for d in disciplinas %}
             <tr>
-                <td>{{ u.id }}</td>
-                <td>{{ u.username }}</td>
-                <td>{{ u.nombre }} {{ u.apellido }}</td>
-                <td><strong>{{ u.rol | upper }}</strong></td>
-                <td>{{ u.plan }}</td>
+                <td>{{ d.id }}</td>
+                <td><strong>{{ d.nombre }}</strong></td>
+                <td>{{ d.descripcion }}</td>
+                <td>{{ d.estado }}</td>
             </tr>
             {% endfor %}
         </tbody>

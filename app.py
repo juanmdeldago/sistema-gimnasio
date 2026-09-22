@@ -12,7 +12,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# MODELO DE USUARIO (Con roles: admin, profesor, alumno)
+# TABLA DE USUARIOS
 class Usuario(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -22,11 +22,18 @@ class Usuario(UserMixin, db.Model):
     rol = db.Column(db.String(20), nullable=False) # 'admin', 'profesor', 'alumno'
     plan = db.Column(db.String(50), default='Ninguno')
 
+# NUEVA: TABLA DE DISCIPLINAS
+class Disciplina(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), nullable=False)
+    descripcion = db.Column(db.String(200))
+    estado = db.Column(db.String(20), default='Activa')
+
 @login_manager.user_loader
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# Crear la base de datos y un usuario Administrador por defecto al iniciar
+# Crear base de datos al iniciar
 with app.app_context():
     db.create_all()
     if not Usuario.query.filter_by(username='admin').first():
@@ -74,9 +81,7 @@ def registro():
         apellido = request.form['apellido']
         plan = request.form['plan']
 
-        # Verificar si el usuario ya existe
-        usuario_existente = Usuario.query.filter_by(username=username).first()
-        if usuario_existente:
+        if Usuario.query.filter_by(username=username).first():
             flash('El nombre de usuario ya está en uso. Elegí otro.', 'danger')
             return redirect(url_for('registro'))
 
@@ -108,6 +113,24 @@ def admin_panel():
         return "Acceso denegado", 403
     usuarios = Usuario.query.all()
     return render_template('admin.html', usuarios=usuarios)
+
+# NUEVA: RUTA PARA GESTIONAR DISCIPLINAS
+@app.route('/admin/disciplinas', methods=['GET', 'POST'])
+@login_required
+def admin_disciplinas():
+    if current_user.rol != 'admin':
+        return "Acceso denegado", 403
+    
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        descripcion = request.form['descripcion']
+        nueva_disciplina = Disciplina(nombre=nombre, descripcion=descripcion)
+        db.session.add(nueva_disciplina)
+        db.session.commit()
+        return redirect(url_for('admin_disciplinas'))
+        
+    disciplinas = Disciplina.query.all()
+    return render_template('admin_disciplinas.html', disciplinas=disciplinas)
 
 @app.route('/profesor')
 @login_required
