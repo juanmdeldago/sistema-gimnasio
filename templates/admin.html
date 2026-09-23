@@ -2,53 +2,146 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Gym</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .nav-menu { margin-top: 20px; margin-bottom: 20px; }
-        .nav-menu a { margin-right: 15px; text-decoration: none; font-weight: bold; color: #007bff; padding: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
-        .nav-menu a:hover { background: #e9ecef; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #343a40; color: white; }
-        .btn-logout { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        :root {
+            --bg-main: #0f172a;
+            --bg-sidebar: #1e293b;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border: #334155;
+            --danger: #ef4444;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); display: flex; min-height: 100vh; }
+        
+        /* 1. BARRA LATERAL (SIDEBAR FIJA) */
+        .sidebar { 
+            width: 260px; 
+            background-color: var(--bg-sidebar); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            position: fixed; 
+            height: 100vh; 
+        }
+        .sidebar-header { padding: 30px 25px; border-bottom: 1px solid var(--border); text-align: center; }
+        .sidebar-header h2 { color: var(--accent); font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+        
+        .sidebar-menu { list-style: none; padding-top: 20px; flex-grow: 1; }
+        .sidebar-menu a { 
+            display: flex; 
+            align-items: center; 
+            padding: 16px 25px; 
+            color: var(--text-muted); 
+            text-decoration: none; 
+            font-weight: 500; 
+            transition: all 0.2s; 
+            border-left: 4px solid transparent;
+        }
+        .sidebar-menu a:hover { background-color: rgba(56, 189, 248, 0.05); color: var(--text-main); }
+        .sidebar-menu a.active { 
+            background-color: rgba(56, 189, 248, 0.1); 
+            color: var(--accent); 
+            border-left: 4px solid var(--accent); 
+        }
+        .sidebar-menu a span { margin-right: 15px; font-size: 20px; width: 25px; text-align: center; }
+        
+        .sidebar-footer { padding: 25px; border-top: 1px solid var(--border); }
+        .btn-logout { 
+            display: block; text-align: center; background-color: rgba(239, 68, 68, 0.1); 
+            color: var(--danger); text-decoration: none; padding: 12px; border-radius: 8px; 
+            font-weight: bold; transition: 0.2s; border: 1px solid rgba(239, 68, 68, 0.2); 
+        }
+        .btn-logout:hover { background-color: var(--danger); color: white; }
+
+        /* 2. ÁREA PRINCIPAL DE TRABAJO */
+        .main-content { margin-left: 260px; flex-grow: 1; padding: 40px; width: calc(100% - 260px); }
+        .top-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .top-header h1 { font-size: 26px; font-weight: 600; }
+        
+        /* 3. TARJETAS Y TABLAS MODERNAS */
+        .card { 
+            background-color: var(--bg-card); border-radius: 12px; padding: 25px; 
+            border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: left; padding: 15px 15px 15px 0; color: var(--text-muted); 
+            font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; 
+            border-bottom: 1px solid var(--border); 
+        }
+        td { padding: 16px 15px 16px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
+        
+        .badge { background-color: rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge-admin { background-color: rgba(56, 189, 248, 0.15); color: var(--accent); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>Panel de Administración Total</h2>
-        <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
-    </div>
+    
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>CROSSADMIN</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('admin_panel') }}" class="active">
+                    <span>👥</span> Usuarios
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_disciplinas') }}">
+                    <span>🏋️</span> Disciplinas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_clases') }}">
+                    <span>📅</span> Agenda
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </aside>
 
-    <div class="nav-menu">
-        <a href="{{ url_for('admin_panel') }}">👥 Usuarios</a>
-        <a href="{{ url_for('admin_disciplinas') }}">🏋️ Disciplinas</a>
-        <a href="{{ url_for('admin_clases') }}">📅 Agenda de Clases</a>
-    </div>
+    <!-- ÁREA CENTRAL -->
+    <main class="main-content">
+        <div class="top-header">
+            <h1>Gestión de Usuarios</h1>
+        </div>
+        
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Rol</th>
+                        <th>Plan Activo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--accent);">@{{ u.username }}</td>
+                        <td>{{ u.nombre }} {{ u.apellido }}</td>
+                        <td><span class="badge {% if u.rol == 'admin' %}badge-admin{% endif %}">{{ u.rol | upper }}</span></td>
+                        <td>{{ u.plan }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
 
-    <h3>Listado de Usuarios Registrados</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Usuario</th>
-                <th>Nombre y Apellido</th>
-                <th>Rol</th>
-                <th>Plan</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for u in usuarios %}
-            <tr>
-                <td>{{ u.id }}</td>
-                <td>{{ u.username }}</td>
-                <td>{{ u.nombre }} {{ u.apellido }}</td>
-                <td><strong>{{ u.rol | upper }}</strong></td>
-                <td>{{ u.plan }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </body>
 </html>
