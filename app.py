@@ -74,6 +74,28 @@ def login():
             return redirect(url_for('index'))
         flash('Credenciales incorrectas', 'danger')
     return render_template('login.html')
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        nombre = request.form['nombre']
+        apellido = request.form['apellido']
+        plan = request.form['plan']
+
+        if Usuario.query.filter_by(username=username).first():
+            flash('El usuario ya existe.', 'danger')
+            return redirect(url_for('registro'))
+
+        nuevo = Usuario(
+            username=username, password=generate_password_hash(password, method='pbkdf2:sha256'),
+            nombre=nombre, apellido=apellido, rol='alumno', plan=plan
+        )
+        db.session.add(nuevo)
+        db.session.commit()
+        flash('Cuenta creada. Ya podés iniciar sesión.', 'success')
+        return redirect(url_for('login'))
+    return render_template('registro.html')
 
 @app.route('/logout')
 @login_required
