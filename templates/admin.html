@@ -3,123 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Usuarios - Admin</title>
+    <title>Dashboard - Admin</title>
     <style>
-        :root {
-            --bg-main: #0f172a;
-            --bg-sidebar: #1e293b;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --border: #334155;
-            --danger: #ef4444;
-            --success: #22c55e;
-        }
-        
+        :root { --bg-main: #0f172a; --bg-sidebar: #1e293b; --bg-card: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --border: #334155; --danger: #ef4444; --success: #22c55e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); display: flex; min-height: 100vh; }
         
-        /* BARRA LATERAL */
-        .sidebar { width: 260px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; height: 100vh; }
+        /* BARRA LATERAL (Responsive) */
+        .sidebar { width: 260px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000;}
         .sidebar-header { padding: 30px 25px; border-bottom: 1px solid var(--border); text-align: center; }
-        .sidebar-header h2 { color: var(--accent); font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+        .sidebar-header h2 { color: var(--accent); font-size: 22px; font-weight: 800; }
         .sidebar-menu { list-style: none; padding-top: 20px; flex-grow: 1; }
-        .sidebar-menu a { display: flex; align-items: center; padding: 16px 25px; color: var(--text-muted); text-decoration: none; font-weight: 500; transition: all 0.2s; border-left: 4px solid transparent; }
-        .sidebar-menu a:hover { background-color: rgba(56, 189, 248, 0.05); color: var(--text-main); }
+        .sidebar-menu a { display: flex; align-items: center; padding: 16px 25px; color: var(--text-muted); text-decoration: none; font-weight: 500; border-left: 4px solid transparent; }
         .sidebar-menu a.active { background-color: rgba(56, 189, 248, 0.1); color: var(--accent); border-left: 4px solid var(--accent); }
         .sidebar-menu a span { margin-right: 15px; font-size: 20px; width: 25px; text-align: center; }
         .sidebar-footer { padding: 25px; border-top: 1px solid var(--border); }
-        .btn-logout { display: block; text-align: center; background-color: rgba(239, 68, 68, 0.1); color: var(--danger); text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; transition: 0.2s; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .btn-logout:hover { background-color: var(--danger); color: white; }
+        .btn-logout { display: block; text-align: center; background-color: rgba(239, 68, 68, 0.1); color: var(--danger); text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; }
+        
+        .main-content { margin-left: 260px; flex-grow: 1; padding: 30px; width: calc(100% - 260px); }
+        
+        /* DASHBOARD METRICS */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .dash-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+        .dash-info h3 { font-size: 13px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
+        .dash-info h2 { font-size: 28px; color: var(--text-main); margin: 0; }
+        .dash-icon { font-size: 35px; opacity: 0.2; }
 
-        /* ÁREA PRINCIPAL */
-        .main-content { margin-left: 260px; flex-grow: 1; padding: 40px; width: calc(100% - 260px); }
-        .top-header { margin-bottom: 30px; }
-        .top-header h1 { font-size: 26px; font-weight: 600; margin-bottom: 5px; }
+        .card { background-color: var(--bg-card); border-radius: 12px; padding: 25px; border: 1px solid var(--border); overflow-x: auto;}
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; padding: 15px; color: var(--text-muted); font-size: 13px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
         
-        .card { background-color: var(--bg-card); border-radius: 12px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        
-        /* TABLA */
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px 15px 15px 0; color: var(--text-muted); font-size: 13px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 16px 15px 16px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
-        tr:last-child td { border-bottom: none; }
-        .badge { background-color: rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .msg { padding: 10px; background: rgba(34, 197, 94, 0.1); color: var(--success); margin-bottom: 20px; border-radius: 5px; }
+
+        /* ADAPTACIÓN MÓVIL APP-LIKE */
+        @media (max-width: 768px) {
+            body { padding-bottom: 70px; }
+            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; flex-direction: row; border-right: none; border-top: 1px solid var(--border); }
+            .sidebar-header, .sidebar-footer { display: none; }
+            .sidebar-menu { display: flex; width: 100%; padding: 0; justify-content: space-around; align-items: center; margin: 0;}
+            .sidebar-menu li { width: 100%; }
+            .sidebar-menu a { flex-direction: column; padding: 10px 0; border-left: none; font-size: 11px; justify-content: center; }
+            .sidebar-menu a span { margin: 0 0 4px 0; }
+            .sidebar-menu a.active { border-left: none; border-top: 3px solid var(--accent); background: transparent; }
+            .main-content { margin-left: 0; width: 100%; padding: 20px 15px; }
+        }
     </style>
 </head>
 <body>
-    
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>CROSSADMIN</h2>
-        </div>
+        <div class="sidebar-header"><h2>CROSSADMIN</h2></div>
         <ul class="sidebar-menu">
-            <li>
-                <a href="{{ url_for('admin_panel') }}" class="active">
-                    <span>👥</span> Usuarios
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin_disciplinas') }}">
-                    <span>🏋️</span> Disciplinas
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin_clases') }}">
-                    <span>📅</span> Agenda
-                </a>
-            </li>
+            <li><a href="{{ url_for('admin_panel') }}" class="active"><span>👥</span> Usuarios</a></li>
+            <li><a href="{{ url_for('admin_disciplinas') }}"><span>🏋️</span> Disciplinas</a></li>
+            <li><a href="{{ url_for('admin_clases') }}"><span>📅</span> Agenda</a></li>
         </ul>
-        <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
-        </div>
+        <div class="sidebar-footer"><a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a></div>
     </aside>
 
     <main class="main-content">
-        <div class="top-header">
-            <h1>Gestión de Alumnos y Usuarios</h1>
-        </div>
+        <h2 style="margin-bottom: 20px;">Resumen del Día</h2>
         
+        <!-- TARJETAS DE DASHBOARD -->
+        <div class="dashboard-grid">
+            <div class="dash-card" style="border-bottom: 4px solid var(--success);">
+                <div class="dash-info"><h3>Alumnos Activos</h3><h2>{{ activos }}</h2></div>
+                <div class="dash-icon">🟢</div>
+            </div>
+            <div class="dash-card" style="border-bottom: 4px solid var(--danger);">
+                <div class="dash-info"><h3>Planes Pendientes</h3><h2>{{ pendientes }}</h2></div>
+                <div class="dash-icon">🔴</div>
+            </div>
+            <div class="dash-card" style="border-bottom: 4px solid var(--accent);">
+                <div class="dash-info"><h3>Clases Hoy</h3><h2>{{ clases_hoy }}</h2></div>
+                <div class="dash-icon">📅</div>
+            </div>
+            <div class="dash-card" style="border-bottom: 4px solid #f59e0b;">
+                <div class="dash-info"><h3>Reservas Hoy</h3><h2>{{ reservas_hoy }}</h2></div>
+                <div class="dash-icon">👥</div>
+            </div>
+        </div>
+
         {% with messages = get_flashed_messages() %}
           {% if messages %}<div class="msg">{{ messages[0] }}</div>{% endif %}
         {% endwith %}
 
         <div class="card">
+            <h3 style="margin-bottom: 15px;">Directorio de Alumnos</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Usuario / Contacto</th>
-                        <th>Nombre Completo</th>
-                        <th>Actividad / Vencimiento</th>
+                        <th>Alumno</th>
+                        <th>Contacto</th>
+                        <th>Plan / Vencimiento</th>
                         <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for u in usuarios %}
                     <tr>
+                        <td><strong style="color: var(--accent);">@{{ u.username }}</strong><br>{{ u.nombre }} {{ u.apellido }}</td>
+                        <td style="color:var(--text-muted); font-size:12px;">{{ u.telefono }}<br>{{ u.email }}</td>
                         <td>
-                            <strong style="color: var(--accent);">@{{ u.username }}</strong><br>
-                            <span style="font-size:12px; color:var(--text-muted);">{{ u.telefono }} | {{ u.email }}</span>
-                        </td>
-                        <td>{{ u.nombre }} {{ u.apellido }}</td>
-                        <td>
-                            {% if u.rol == 'admin' %}
-                                <span class="badge" style="color:var(--accent);">ADMIN</span>
+                            {% if u.disciplina_asignada %}
+                                <strong style="color:var(--success)">{{ u.disciplina_asignada.nombre }}</strong><br>
+                                <small style="color:var(--text-muted)">Vence: {{ u.vencimiento }}</small>
                             {% else %}
-                                {% if u.disciplina_asignada %}
-                                    <strong style="color:var(--success)">{{ u.disciplina_asignada.nombre }}</strong><br>
-                                    <small style="color:var(--text-muted)">Vence: {{ u.vencimiento }}</small>
-                                {% else %}
-                                    <span style="color:var(--danger); font-size:13px;">Pendiente</span>
-                                {% endif %}
+                                <span style="color:var(--danger); font-size:13px; font-weight:bold;">Pendiente</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if u.rol == 'alumno' %}
-                            <a href="{{ url_for('admin_asignar', usuario_id=u.id) }}" style="background:var(--accent); color:#0f172a; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px;">Asignar Plan</a>
-                            {% endif %}
+                            <a href="{{ url_for('admin_asignar', usuario_id=u.id) }}" style="background:var(--accent); color:#0f172a; padding:6px 12px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">Asignar Plan</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -127,6 +121,5 @@
             </table>
         </div>
     </main>
-
 </body>
 </html>
