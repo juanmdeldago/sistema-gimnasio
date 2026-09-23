@@ -6,7 +6,7 @@
     <style>
         :root { --bg-main: #0f172a; --bg-card: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --border: #334155; --success: #22c55e; --danger: #ef4444;}
         body { margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); }
-        .header-alumno { background: var(--bg-card); padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
+        .header-alumno { background: var(--bg-card); padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--accent);}
         
         .calendario-semanal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; overflow-x: auto; min-width: 900px;}
         .dia-col { background: var(--bg-card); border-radius: 8px; min-height: 400px; border-top: 4px solid var(--accent); }
@@ -15,55 +15,70 @@
         .clase-item { background: var(--bg-main); margin: 0 10px 10px 10px; padding: 12px; border-radius: 6px; border-left: 4px solid var(--accent); }
         .clase-item.anotado { border-left-color: var(--success); }
         .c-hora { font-weight: bold; font-size: 18px; }
-        .c-nombre { color: var(--accent); font-size: 14px; font-weight: bold; margin: 4px 0; }
         
         .btn-reserva { width: 100%; background: var(--accent); color: var(--bg-main); border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-cancelar { width: 100%; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px;}
-        .msg { padding: 10px; background: rgba(239, 68, 68, 0.2); color: var(--danger); margin-bottom: 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
     <div class="header-alumno">
         <div>
-            <h2>Tu Semana</h2>
-            <p style="color: var(--text-muted); margin:0;">Plan contratado: <strong>{{ current_user.plan }}</strong> (Solo podés reservar esta actividad)</p>
+            <h2 style="margin:0 0 5px 0;">Hola, {{ current_user.nombre }}</h2>
+            {% if current_user.disciplina_asignada %}
+                <p style="color: var(--text-muted); margin:0;">
+                    Actividad Autorizada: <strong style="color:var(--accent)">{{ current_user.disciplina_asignada.nombre }}</strong> | 
+                    {% if dias_restantes >= 0 %}
+                        Te quedan <strong style="color:var(--success)">{{ dias_restantes }} días</strong> de vigencia.
+                    {% else %}
+                        <strong style="color:var(--danger)">Plan Vencido</strong>
+                    {% endif %}
+                </p>
+            {% else %}
+                <p style="color: var(--danger); margin:0;">Cuenta en revisión. Esperando asignación del gimnasio.</p>
+            {% endif %}
         </div>
-        <a href="{{ url_for('logout') }}" style="color: var(--danger);">Cerrar Sesión</a>
+        <a href="{{ url_for('logout') }}" style="color: var(--danger); font-weight:bold; text-decoration:none;">Cerrar Sesión</a>
     </div>
 
     {% with messages = get_flashed_messages() %}
-      {% if messages %}<div class="msg">{{ messages[0] }}</div>{% endif %}
+      {% if messages %}<div style="padding:10px; background:rgba(34,197,94,0.1); color:var(--success); margin-bottom:15px; border-radius:5px;">{{ messages[0] }}</div>{% endif %}
     {% endwith %}
 
-    <div class="calendario-semanal">
-        {% for dia in dias_semana %}
-        <div class="dia-col">
-            <div class="dia-header">
-                <h3 style="margin:0;">{{ dia.nombre }}</h3>
-                <small style="color: var(--text-muted);">{{ dia.fecha_str }}</small>
-            </div>
-            
-            {% for c in clases if c.fecha == dia.fecha_str %}
-            <div class="clase-item {% if c.id in reservas_dict %}anotado{% endif %}">
-                <div class="c-hora">{{ c.hora }}</div>
-                <div class="c-nombre">{{ c.disciplina.nombre }}</div>
-                <div style="font-size: 11px; margin-bottom: 10px; color: var(--text-muted);">Lugares: {{ c.cupo - c.reservas|length }}</div>
+    {% if not current_user.disciplina_asignada or dias_restantes < 0 %}
+        <div style="background:var(--bg-card); padding:30px; text-align:center; border-radius:8px;">
+            <h3>Tu grilla no está disponible</h3>
+            <p style="color:var(--text-muted);">Comunicate con la administración para que te activen o renueven el plan.</p>
+        </div>
+    {% else %}
+        <div class="calendario-semanal">
+            {% for dia in dias_semana %}
+            <div class="dia-col">
+                <div class="dia-header">
+                    <h3 style="margin:0;">{{ dia.nombre }}</h3>
+                    <small style="color: var(--text-muted);">{{ dia.fecha_str }}</small>
+                </div>
                 
-                {% if c.id in reservas_dict %}
-                    <form action="{{ url_for('cancelar_reserva', reserva_id=reservas_dict[c.id]) }}" method="POST">
-                        <button type="submit" class="btn-cancelar">Bajarme</button>
-                    </form>
-                {% elif c.reservas|length >= c.cupo %}
-                    <button disabled style="width: 100%; padding: 8px; border-radius:4px; opacity: 0.5;">Agotado</button>
-                {% else %}
-                    <form action="{{ url_for('reservar_clase', clase_id=c.id) }}" method="POST">
-                        <button type="submit" class="btn-reserva">Reservar</button>
-                    </form>
-                {% endif %}
+                {% for c in clases if c.fecha == dia.fecha_str %}
+                <div class="clase-item {% if c.id in reservas_dict %}anotado{% endif %}">
+                    <div class="c-hora">{{ c.hora }}</div>
+                    <div style="font-size: 11px; margin-bottom: 10px; color: var(--text-muted);">Disponibles: {{ c.cupo - c.reservas|length }}</div>
+                    
+                    {% if c.id in reservas_dict %}
+                        <form action="{{ url_for('cancelar_reserva', reserva_id=reservas_dict[c.id]) }}" method="POST">
+                            <button type="submit" class="btn-cancelar">Bajarme</button>
+                        </form>
+                    {% elif c.reservas|length >= c.cupo %}
+                        <button disabled style="width: 100%; padding: 8px; border-radius:4px; opacity: 0.5;">Agotado</button>
+                    {% else %}
+                        <form action="{{ url_for('reservar_clase', clase_id=c.id) }}" method="POST">
+                            <button type="submit" class="btn-reserva">Reservar</button>
+                        </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
             {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+    {% endif %}
 </body>
 </html>
